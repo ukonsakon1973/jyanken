@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/jquery-2.1.3.min.js"></script>
+    <link rel="stylesheet" href="css/sample.css">
+    <!-- 紙吹雪を簡単に表示するためのライブラリ -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <title>じゃんけん大会</title>
+</head>
+
+<body>
+
+    <header>
+       
+        <div class="header-inner">
+            <h1>じゃんけん大会</h1>
+        </div>
+    </header>
+
+    <!-- 全体を囲むゲーム用のコンテナ -->
+    <div class="game-wrapper">
+  
+        <!-- 左側のキャラクター -->
+        <div class="character-box" id="left-box">
+            <p class="character-label">あなた</p>
+            <img src="hiotoko.png" alt="あなた" class="chara-img">
+        </div>
+
+        <main class="container">
+            <section class="user-section">
+                <h2 class="sub-title">あなたの出す手は?</h2>
+                <ul class="hands-list">
+                    <li id="gu_btn">
+                        <img src="goo.png" alt="グー">
+                    </li>
+                    <li id="cho_btn">
+                        <img src="cyoki.png" alt="チョキ">
+                    </li>
+                    <li id="par_btn">
+                        <img src="par.png" alt="パー">
+                    </li>
+                </ul>
+            </section>
+
+            <section class="pc-section">
+                <div class="pc-title">相手が出した手は?</div>
+                <div id="pc_hands" class="pc-hand-display">
+                    <!-- 初期状態または判定後に画像が入ります -->
+                    <span class="placeholder"></span>
+                </div>
+                <div id="judgment" class="result-display">結果は？</div>
+            </section>
+        </main>
+
+        <!-- 右側のキャラクター -->
+        <div class="character-box" id="right-box">
+            <p class="character-label">相手</p>
+            <img src="kitune.png" alt="対戦相手キャラクター" class="chara-img">
+        </div>
+
+    </div> <!-- /.game-wrapper の閉じタグ -->
+  
+    <footer></footer>
+
+    <script>
+    // ボタンを押したときに動くメインの関数
+    function janken(userHand) {
+        // 1. コンピュータの手をランダム（1〜3）で決める
+        let randomNumber = Math.floor(Math.random() * 3) + 1;
+
+        let pcHand = "";
+        let pcImage = "";
+
+        if (randomNumber === 1) {
+            pcHand = "グー";
+            pcImage = '<img src="goo.png" alt="グー">';
+        } else if (randomNumber === 2) {
+            pcHand = "チョキ";
+            pcImage = '<img src="cyoki.png" alt="チョキ">';
+        } else if (randomNumber === 3) {
+            pcHand = "パー";
+            pcImage = '<img src="par.png" alt="パー">';
+        }
+
+        // 画面の「#pc_hands」をコンピュータの画像に書き換える
+        $("#pc_hands").html(pcImage);
+
+        // 2. 勝敗判定を行う
+        let result = "";
+
+        if (userHand === pcHand) {
+            result = "あいこ";
+        } else if (
+            (userHand === "グー" && pcHand === "チョキ") ||
+            (userHand === "チョキ" && pcHand === "パー") ||
+            (userHand === "パー" && pcHand === "グー")
+        ) {
+            result = "勝ち";
+        } else {
+            result = "負け";
+        }
+
+        // 画面の結果表示部分（#judgment）を勝敗結果に書き換える
+        $("#judgment").text(result);
+
+// ==========================================
+        // 3. キャラクターを動かすアニメーション & 紙吹雪の演出
+        // ==========================================
+        const leftChar = document.querySelector('#left-box img');   // 左（あなた）
+        const rightChar = document.querySelector('#right-box img'); // 右（相手）
+
+        if (leftChar && rightChar) {
+            // 前回のクラスを一度リセット
+            leftChar.classList.remove('win-action', 'lose-action', 'jump-action');
+            rightChar.classList.remove('win-action', 'lose-action', 'jump-action');
+
+            // リフレッシュしてアニメーションを再起動させるおまじない
+            void leftChar.offsetWidth;
+
+            // じゃんけんぽん！と同時に両者が跳ねる
+            leftChar.classList.add('jump-action');
+            rightChar.classList.add('jump-action');
+
+            // 0.4秒後に勝敗に応じたポーズに変化させる
+            setTimeout(() => {
+                if (result === "勝ち") {
+                    leftChar.classList.add('win-action');
+                    rightChar.classList.add('lose-action');
+
+                    // 🎉 あなた（左側）が勝ったときの紙吹雪
+                    confetti({
+                        particleCount: 80,
+                        spread: 70,
+                        origin: { x: 0.2, y: 0.6 }
+                    });
+
+                } else if (result === "負け") {
+                    leftChar.classList.add('lose-action');
+                    rightChar.classList.add('win-action');
+
+                    // 🎉 相手（右側）が勝ったときの紙吹雪
+                    confetti({
+                        particleCount: 80,
+                        spread: 70,
+                        origin: { x: 0.8, y: 0.6 }
+                    });
+                } else {
+                    // 🤝 あいこのときは紙吹雪を飛ばさない（ポーズ変化やアニメーションのみ）
+                }
+            }, 500);
+        
+        
+        }
+    }
+
+    // 4. 各ボタンがクリックされた時の処理を設定する
+    $("#gu_btn").on("click", function () {
+        janken("グー");
+    });
+
+    $("#cho_btn").on("click", function () {
+        janken("チョキ");
+    });
+
+    $("#par_btn").on("click", function () {
+        janken("パー");
+    });
+    </script>
+</body>
+
+</html>
